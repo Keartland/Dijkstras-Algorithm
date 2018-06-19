@@ -17,8 +17,9 @@ for (i=0;i < verts;i++){
 
 for (i=0;i < verts;i++){
   for (j=0;j < verts;j++){
-    if (i != j){
+    if (Math.random() < 0.25 && i != j){
 		graph[i][j] = dist(pos[i],pos[j])
+		graph[j][i] = dist(pos[i],pos[j])
 		context.beginPath();
 		context.moveTo(pos[i].x,pos[i].y);
 		context.lineTo(pos[j].x,pos[j].y);
@@ -46,12 +47,22 @@ function djikstra(s, e, graph, pos){
 	fScore = []
 	for (i=0;i < graph.length;i++){fScore.push(Infinity)}
 	fScore[start] = dist(pos[start], pos[end])
-	console.log(openSet)
 
 	while(openSet.length > 0){
 	//for (p=0;p < 100;p++){
-		minnie = Math.min(...fScore)
-		current = fScore.indexOf(minnie);
+		fOpenScore = []
+		for(i=0;i < fScore.length;i++){
+			if (i in openSet){
+				fOpenScore.push(fScore[openSet[i]])
+			} else {
+				fOpenScore.push(Infinity)
+			}
+		}
+		minnie = Math.min(...fOpenScore)
+		current = fOpenScore.indexOf(minnie);
+		console.log(openSet)
+		console.log(openSet.length)
+		console.log(current)
 		if (current == end){
             return reconstruct_path(cameFrom, current)
 		}
@@ -67,7 +78,7 @@ function djikstra(s, e, graph, pos){
 			if (!(i in openSet)){
 				openSet.push(i)
 			}
-			tentative_gScore = gScore[current] + graph[current][i]
+			tentative_gScore = gScore[current] + dist(pos[current], pos[i])
 			if (tentative_gScore >= gScore[i]){
 				continue
 			}
@@ -91,7 +102,6 @@ function reconstruct_path(cameFrom, current){
 	}
     return total_path.reverse()
 }
-console.log("YOYOYOY")
 console.log(djikstra("a","c",graph, pos))
 for(i=0;i < pos.length;i++){
 	context.fillStyle = "black";
