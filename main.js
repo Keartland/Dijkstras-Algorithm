@@ -4,7 +4,7 @@ const context = canvas.getContext('2d');
 function dist(from,to){
   return Math.sqrt(Math.pow(Math.abs(from.x - to.x),2) + Math.pow(Math.abs(from.y - to.y),2))
 }
-verts = 3
+verts = 5
 
 graph = new Array(verts);
 for (i=0;i < verts;i++){graph[i] = new Array(verts);}
@@ -18,31 +18,87 @@ for (i=0;i < verts;i++){
 for (i=0;i < verts;i++){
   for (j=0;j < verts;j++){
     if (i != j){
-      graph[i][j] = dist(pos[i],pos[j])
-    }
+		graph[i][j] = dist(pos[i],pos[j])
+		context.beginPath();
+		context.moveTo(pos[i].x,pos[i].y);
+		context.lineTo(pos[j].x,pos[j].y);
+		context.stroke();
+    } else{
+		graph[i][j] = Infinity
+	}
   }
 }
 
-djikstra(graph,"a")
 
-function djikstra(graph, start){
-  removable = graph.slice(0);
-  j = alphabet.indexOf(start)
-  prev = alphabet.indexOf(start)
-  for (i=0;i < graph.length;i++){
-    sorted = removable[j].slice(0);
-    sorted.sort(function(a, b){return a-b})
-    j = removable[j].indexOf(sorted[0])
-    removable[prev] = 0
-    for (k=0;k < graph.length;k++){
-      removable[k][prev] = Math.sqrt(Math.pow(canvas.width,2)+Math.pow(canvas.height,2))
-    }
-    prev = j
-    console.log(removable.slice(0))
-    console.log(j)
-  }
+for (h=0;h < graph.length;h++){
+	console.log(graph[h])
 }
-function loop(){
 
+function djikstra(s, e, graph, pos){
+	start = alphabet.indexOf(s)
+	end = alphabet.indexOf(e)
+	closedSet = []
+	openSet = [start]
+	cameFrom = []
+	gScore = []
+	for (i=0;i < graph.length;i++){gScore.push(Infinity)}
+	gScore[start] = 0
+	fScore = []
+	for (i=0;i < graph.length;i++){fScore.push(Infinity)}
+	fScore[start] = dist(pos[start], pos[end])
+	console.log(openSet)
+
+	while(openSet.length > 0){
+	//for (p=0;p < 100;p++){
+		minnie = Math.min(...fScore)
+		current = fScore.indexOf(minnie);
+		if (current == end){
+            return reconstruct_path(cameFrom, current)
+		}
+		openSet.splice(current,1)
+        closedSet.push(current)
+		for(i=0; i < graph[current].length;i++){
+			if (graph[current][i] == Infinity){
+				continue
+			}
+			if (i in closedSet){
+				continue
+			}
+			if (!(i in openSet)){
+				openSet.push(i)
+			}
+			tentative_gScore = gScore[current] + graph[current][i]
+			if (tentative_gScore >= gScore[i]){
+				continue
+			}
+			cameFrom[i] = current
+			gScore[i] = tentative_gScore
+			fScore[i] = gScore[i] + dist(pos[i], pos[end])
+				
+		}
+		
+	}
+	
+	return "No Path"
 }
-setInterval(loop, 15);
+
+function reconstruct_path(cameFrom, current){
+	console.log(cameFrom)
+    total_path = [alphabet[current]]
+    while (current in cameFrom){
+        current = cameFrom[current]
+        total_path.push(alphabet[current])
+	}
+    return total_path.reverse()
+}
+console.log("YOYOYOY")
+console.log(djikstra("a","c",graph, pos))
+for(i=0;i < pos.length;i++){
+	context.fillStyle = "black";
+	context.beginPath();
+	context.arc(pos[i].x, pos[i].y, 10, 0, 2 * Math.PI, false);
+	context.fill()
+	context.fillStyle = "white";
+	context.fillText(pos[i].name,pos[i].x,pos[i].y)
+	
+}
