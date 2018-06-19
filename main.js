@@ -4,40 +4,82 @@ const context = canvas.getContext('2d');
 function dist(from,to){
   return Math.sqrt(Math.pow(Math.abs(from.x - to.x),2) + Math.pow(Math.abs(from.y - to.y),2))
 }
-verts = 5
 
-graph = new Array(verts);
-for (i=0;i < verts;i++){graph[i] = new Array(verts);}
+function createRGraph(verts){
+	graph = new Array(verts);
+	for (i=0;i < verts;i++){graph[i] = new Array(verts);}
 
-pos = []
-const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
-for (i=0;i < verts;i++){
-  pos.push({name: alphabet[i],x:Math.floor((Math.random() * canvas.width) + 1), y: Math.floor((Math.random() * canvas.height) + 1)})
-}
-
-for (i=0;i < verts;i++){
-  for (j=0;j < verts;j++){
-    if (Math.random() < 0.25 && i != j){
-		graph[i][j] = dist(pos[i],pos[j])
-		graph[j][i] = dist(pos[i],pos[j])
-		context.beginPath();
-		context.moveTo(pos[i].x,pos[i].y);
-		context.lineTo(pos[j].x,pos[j].y);
-		context.stroke();
-    } else{
-		graph[i][j] = Infinity
+	pos	= []
+	for (i=0;i < verts;i++){
+		pos.push({name: i,x:Math.floor((Math.random() * canvas.width) + 1), y: Math.floor((Math.random() * canvas.height) + 1)})
 	}
-  }
+
+	for (i=0;i < verts;i++){
+		for (j=0;j < verts;j++){
+			if ((Math.random() < 0.1) && (i != j) && !((i == 0) && (j == verts - 1) || (j == 0) && (i == verts - 1))){
+				len = dist(pos[i],pos[j])
+				graph[i][j] = len
+				graph[j][i] = len
+				context.strokeStyle = "black"
+				context.lineWidth = 1;
+				context.beginPath();
+				context.moveTo(pos[i].x,pos[i].y);
+				context.lineTo(pos[j].x,pos[j].y);
+				context.stroke();
+			} else{
+				graph[i][j] = Infinity
+			}
+		}
+	}
+return {graph:graph, pos:pos}
+}
+
+function createFGraph(verts,end){
+	graph = new Array(verts);
+	for (i=0;i < verts;i++){graph[i] = new Array(verts);}
+
+	pos	= []
+	for (i=0;i < verts;i++){
+		pos.push({name: i,x:i*(canvas.width/verts), y:canvas.height/2 + (canvas.height/2)*Math.sin(i)})	
+	}
+
+	for (i=0;i < verts;i++){
+		for (j=0;j < verts;j++){
+			if ((Math.random() < 0.5) && (i != j) && (!(i == 0) && !(i == end) || !(j == 0) && !(j == end)) && Math.abs(i - j) < 6){
+				len = dist(pos[i],pos[j])
+				graph[i][j] = len
+				graph[j][i] = len
+				context.strokeStyle = "black"
+				context.lineWidth = 1;
+				context.beginPath();
+				context.moveTo(pos[i].x,pos[i].y);
+				context.lineTo(pos[j].x,pos[j].y);
+				context.stroke();
+			} else {
+				graph[i][j] = Infinity
+			}
+		}
+	}
+return {graph:graph, pos:pos}
 }
 
 
-for (h=0;h < graph.length;h++){
-	console.log(graph[h])
+
+function drawNode(pos){
+	context.beginPath();
+	context.arc(pos.x, pos.y, 5, 0, 2 * Math.PI, false);
+	context.fill()
+	
+}
+function drawNode(pos,r){
+	context.beginPath();
+	context.arc(pos.x, pos.y, r, 0, 2 * Math.PI, false);
+	context.fill()
 }
 
-function djikstra(s, e, graph, pos){
-	start = alphabet.indexOf(s)
-	end = alphabet.indexOf(e)
+async function djikstra(s, e, graph, pos){
+	start = s
+	end = e
 	closedSet = []
 	openSet = [start]
 	cameFrom = []
@@ -49,33 +91,34 @@ function djikstra(s, e, graph, pos){
 	fScore[start] = dist(pos[start], pos[end])
 
 	while(openSet.length > 0){
-	//for (p=0;p < 100;p++){
-		fOpenScore = []
-		for(i=0;i < fScore.length;i++){
-			if (i in openSet){
-				fOpenScore.push(fScore[openSet[i]])
-			} else {
-				fOpenScore.push(Infinity)
+		min = Infinity 
+		current = -1
+		for(i=0;i < openSet.length;i++){
+			if (fScore[openSet[i]] < min){
+				min = fScore[openSet[i]]
+				current = openSet[i]
 			}
 		}
-		minnie = Math.min(...fOpenScore)
-		current = fOpenScore.indexOf(minnie);
-		console.log(openSet)
-		console.log(openSet.length)
-		console.log(current)
+		context.fillStyle = "blue"
+		drawNode(pos[current])
+		// console.log("current: " + current + " end: " + end)
 		if (current == end){
-            return reconstruct_path(cameFrom, current)
+            return await reconstruct_path(cameFrom, current)
 		}
-		openSet.splice(current,1)
+		// console.log(openSet)
+		openSet.splice(openSet.indexOf(current),1)
+
         closedSet.push(current)
+
 		for(i=0; i < graph[current].length;i++){
 			if (graph[current][i] == Infinity){
 				continue
 			}
-			if (i in closedSet){
+			//console.log("neigh: "+i)
+			if (closedSet.indexOf(i) != -1){
 				continue
 			}
-			if (!(i in openSet)){
+			if (openSet.indexOf(i) == -1){
 				openSet.push(i)
 			}
 			tentative_gScore = gScore[current] + dist(pos[current], pos[i])
@@ -85,30 +128,69 @@ function djikstra(s, e, graph, pos){
 			cameFrom[i] = current
 			gScore[i] = tentative_gScore
 			fScore[i] = gScore[i] + dist(pos[i], pos[end])
+			
+			context.fillStyle = "red"
+			drawNode(pos[i])
+			context.lineWidth=2;
+			context.strokeStyle = "lime"
+			context.beginPath();
+			context.moveTo(pos[current].x,pos[current].y);
+			context.lineTo(pos[i].x,pos[i].y);
+			context.stroke();
+			await new Promise(resolve => setTimeout(resolve, 100))
+			context.fillStyle = "black"
+			drawNode(pos[i])
+
+			
 				
 		}
+		context.fillStyle = "black"
+		drawNode(pos[current])
+		
 		
 	}
 	
 	return "No Path"
 }
 
-function reconstruct_path(cameFrom, current){
-	console.log(cameFrom)
-    total_path = [alphabet[current]]
+async function reconstruct_path(cameFrom, current){
+    total_path = [current]
     while (current in cameFrom){
+		last = current
+		context.lineWidth=10;
         current = cameFrom[current]
-        total_path.push(alphabet[current])
+        total_path.push(current)
+		context.strokeStyle = "yellow"
+		context.beginPath();
+		context.moveTo(pos[current].x,pos[current].y);
+		context.lineTo(pos[last].x,pos[last].y);
+		context.stroke();
 	}
+	await new Promise(resolve => setTimeout(resolve, 2))
     return total_path.reverse()
 }
-console.log(djikstra("a","c",graph, pos))
-for(i=0;i < pos.length;i++){
-	context.fillStyle = "black";
-	context.beginPath();
-	context.arc(pos[i].x, pos[i].y, 10, 0, 2 * Math.PI, false);
-	context.fill()
-	context.fillStyle = "white";
-	context.fillText(pos[i].name,pos[i].x,pos[i].y)
-	
+
+
+async function loop(){
+	while (true){
+		console.clear()
+		context.fillStyle = "white"
+		context.rect(0, 0, canvas.width, canvas.height)
+		context.fill()
+		verts = Math.floor(Math.random() * (50 - 10 + 1)) + 10
+		end = Math.floor(Math.random() * (verts - 1))
+		yo = createFGraph(verts,end)
+		for(i=0;i < yo.pos.length;i++){
+			context.fillStyle = "black"
+			drawNode(pos[i],5)
+		}
+		context.fillStyle = "blue"
+		drawNode(pos[end],10)
+		await djikstra(0,end,yo.graph, yo.pos).then(data => console.log(data))
+		await new Promise(resolve => setTimeout(resolve, 2000))
+		
+	}
 }
+loop()
+
+
