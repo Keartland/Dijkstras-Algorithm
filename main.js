@@ -21,7 +21,7 @@ for (i=0;i < verts;i++){
   for (i=0;i < verts;i++){
     connections = 0
     for (j=0;j < verts;j++){
-      if (Math.random() < 0.5 && connections <= 4 && (i != j) && Math.abs(i - j) < 5){
+      if (Math.random() < 0.75 && connections <= 4 && (i != j) && Math.abs(i - j) < 5){
         len = dist(vertexPositions[i],vertexPositions[j])
         graph[i][j] = len
         connections++
