@@ -24,11 +24,11 @@ for (i=0;i < verts;i++){
       if (Math.random() < 0.5 && connections <= 4 && (i != j) && Math.abs(i - j) < 5){
         len = dist(vertexPositions[i],vertexPositions[j])
         graph[i][j] = len
-        graph[j][i] = len
         connections++
       } else {
         graph[i][j] = Infinity
       }
+      graph[j][i] = graph[i][j]
     }
   }
   return {graph:graph, vertexPositions:vertexPositions}
