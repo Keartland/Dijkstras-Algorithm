@@ -12,9 +12,10 @@ for (i=0;i < verts;i++){graph[i] = new Array(verts);}
 vertexPositions	= []
 for (i=0;i < verts;i++){
     y = (canvas.height / 2) + (8*Math.sin(2*(i- verts/2)) * (Math.pow(0.8, i - verts/2) + Math.pow(1.2, i - verts/2)) + (Math.random() * 200) - 100)
+    x = i * (canvas.width / verts) + (Math.random() * canvas.width / (2*verts))
     vertexPositions.push({
     name: i,
-    x: i * (canvas.width / verts) + (Math.random() * canvas.width / (2*verts)),
+    x: x > canvas.width ? canvas.width : x < 0 ? 0 : x,
     y: y > canvas.height ? canvas.height : y < 0 ? 0 : y,
     })
   }
